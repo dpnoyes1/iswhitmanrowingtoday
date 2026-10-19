@@ -1,0 +1,5 @@
+# The weather pages moved to their own site
+/weather            https://dcrowingweather.netlify.app/  301
+/weather/*          https://dcrowingweather.netlify.app/  301
+/weather2-test      https://dcrowingweather.netlify.app/  301
+/weather2-test/*    https://dcrowingweather.netlify.app/  301
