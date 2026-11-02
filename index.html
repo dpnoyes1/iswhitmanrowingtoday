@@ -173,6 +173,8 @@
     font-size: 12px;
     color: var(--mist);
     letter-spacing: 0.02em;
+    white-space: pre-line;   /* keeps line breaks typed into the sheet / form */
+    line-height: 1.5;
   }
 
   .note {
@@ -228,6 +230,33 @@
   // ----------------------------------------------------------
 
   const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  // ----- WINTER SHIFTS: edit the times here if they change -----
+  // Winter practices run in two shifts, Girls and Boys on opposite ones.
+  //   Mon / Wed ............ Girls early, Boys late
+  //   Tue / Thu ............ Girls late,  Boys early
+  //   Fri (even date) ...... Girls early, Boys late
+  //   Fri (odd date) ....... Girls late,  Boys early
+  const WINTER_SHIFTS = {
+    early: '3:30–5:30 PM',
+    late:  '5:00–7:00 PM'
+  };
+  // -------------------------------------------------------------
+
+  // Returns the two-line "Girls / Boys" shift text for a winter practice
+  // day, or null if the weekday has no shift pattern (Sat/Sun).
+  function winterShiftText(date) {
+    const day = date.getDay();
+    let girlsEarly;
+    if (day === 1 || day === 3) girlsEarly = true;
+    else if (day === 2 || day === 4) girlsEarly = false;
+    else if (day === 5) girlsEarly = date.getDate() % 2 === 0;
+    else return null;
+
+    const girls = girlsEarly ? WINTER_SHIFTS.early : WINTER_SHIFTS.late;
+    const boys  = girlsEarly ? WINTER_SHIFTS.late  : WINTER_SHIFTS.early;
+    return 'Girls: ' + girls + '\nBoys: ' + boys;
+  }
 
   // Loads a sheet tab via a <script> tag instead of fetch(). Script tags
   // aren't subject to CORS the way fetch requests are, which sidesteps
@@ -309,8 +338,22 @@
 
   // An override for the date wins, and its Reason (if given) is shown
   // as-is. Otherwise, use the season's weekly pattern, with the reason
-  // shown as "Standard Schedule". If neither applies, default to NO.
+  // shown as "Standard Schedule" (or the Girls/Boys shift times on a
+  // winter YES day). If neither applies, default to NO.
   function detailsFor(date, seasons, overrides) {
+    const season = seasons.find(s => {
+      const start = parseDate(s['Start Date']);
+      const end = parseDate(s['End Date']);
+      return start && end && date >= start && date <= end;
+    });
+    const isWinter = !!season &&
+      (season['Season'] || '').trim().toLowerCase() === 'winter';
+
+    // Default text for a YES day: shift times in winter, otherwise standard.
+    function yesText() {
+      return (isWinter && winterShiftText(date)) || 'Standard Schedule';
+    }
+
     const override = overrides.find(o =>
       sameDay(parseDate(o['Date']), date) && normalizeStatus(o['Status']) !== 'REGATTA'
     );
@@ -320,17 +363,13 @@
       let reason;
       if (reasonRaw) reason = reasonRaw;
       else if (status === 'PARTIAL') reason = 'Check Slack for Details';
+      else if (status === 'YES') reason = yesText();
       else reason = 'Standard Schedule';
       return { status, reason };
     }
 
-    const season = seasons.find(s => {
-      const start = parseDate(s['Start Date']);
-      const end = parseDate(s['End Date']);
-      return start && end && date >= start && date <= end;
-    });
     const status = season ? normalizeStatus(season[WEEKDAYS[date.getDay()]]) : 'NO';
-    return { status, reason: 'Standard Schedule' };
+    return { status, reason: status === 'YES' ? yesText() : 'Standard Schedule' };
   }
 
   // Finds the soonest REGATTA-status row landing within the next 7 days
