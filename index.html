@@ -489,7 +489,8 @@
   }
 
   // Status and reason for a slot. A weekend slot always shows the OYO
-  // workout note. If an override puts practice on either weekend day,
+  // workout note, and reads OFF (no in-person practice) when both days
+  // are off. If an override puts practice on either weekend day,
   // the card shows the busiest status and also lists each day's details
   // so nothing gets hidden.
   function slotDetails(slot, seasons, overrides) {
@@ -497,7 +498,7 @@
     if (!slot.weekend) return each[0];
 
     const allOff = each.every(e => e.status === 'NO');
-    if (allOff) return { status: 'NO', reason: WEEKEND_TEXT };
+    if (allOff) return { status: 'NO', label: 'OFF', reason: WEEKEND_TEXT };
 
     const top = each.reduce((a, b) => (STATUS_RANK[b.status] > STATUS_RANK[a.status] ? b : a));
     const reason = WEEKEND_TEXT + '\n\n' + each.map(e =>
@@ -507,11 +508,11 @@
     return { status: top.status, reason };
   }
 
-  function makeCard({ label, date, status, reason, shifts, compact }) {
+  function makeCard({ label, date, status, statusText, reason, shifts, compact }) {
     const card = document.createElement('div');
     card.className = 'card ' + statusClass(status) + (compact ? ' compact' : '');
     const reasonClass = 'reason' + (shifts ? ' shifts' : '');
-    [['label', label], ['date', date], ['status', status], [reasonClass, reason]].forEach(([cls, text]) => {
+    [['label', label], ['date', date], ['status', statusText || status], [reasonClass, reason]].forEach(([cls, text]) => {
       const el = document.createElement('span');
       el.className = cls;
       if (shifts && compact && cls !== 'label' && cls.startsWith('reason')) {
@@ -552,7 +553,7 @@
     const week = document.getElementById('week-grid');
 
     slots.forEach((slot, i) => {
-      const { status, reason, shifts } = slotDetails(slot, seasons, overrides);
+      const { status, label: statusText, reason, shifts } = slotDetails(slot, seasons, overrides);
       const first = slot.days[0];
       const last = slot.days[slot.days.length - 1];
       const isToday = i === 0;
@@ -568,7 +569,7 @@
         date = isToday ? longDate(first) : shortDate(first);
       }
 
-      const card = makeCard({ label, date, status, reason, shifts, compact: !isToday });
+      const card = makeCard({ label, date, status, statusText, reason, shifts, compact: !isToday });
       (isToday ? grid : week).appendChild(card);
     });
 
