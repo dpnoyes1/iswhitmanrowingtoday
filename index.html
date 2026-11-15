@@ -186,6 +186,30 @@
   }
 
   .note.error { color: var(--stop); }
+
+  /* ----- Rolling 5-day (winter) layout ----- */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .card.compact {
+    min-height: 0;
+    justify-content: flex-start;
+    padding: 16px 10px 18px;
+  }
+
+  .card.compact .status { font-size: 36px; margin-top: 6px; }
+  .card.compact .reason { font-size: 11px; padding: 4px 8px; margin-top: 10px; }
+
+  @media (min-width: 560px) {
+    .week-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
+    .card.compact { min-height: 0; padding: 24px 14px 28px; }
+    .card.compact .status { font-size: 44px; margin-top: 8px; }
+    .card.compact .reason { font-size: 12px; padding: 6px 10px; margin-top: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -198,20 +222,9 @@
   <div class="horizon" aria-hidden="true"></div>
 
   <main>
-    <div class="status-grid">
-      <div class="card" id="today-card">
-        <span class="label">Today</span>
-        <span class="date" id="today-date"></span>
-        <span class="status" id="today-status">&hellip;</span>
-        <span class="reason" id="today-reason"></span>
-      </div>
-      <div class="card" id="tomorrow-card">
-        <span class="label">Tomorrow</span>
-        <span class="date" id="tomorrow-date"></span>
-        <span class="status" id="tomorrow-status">&hellip;</span>
-        <span class="reason" id="tomorrow-reason"></span>
-      </div>
-    </div>
+    <!-- Cards are built by the script below, based on LAYOUT. -->
+    <div class="status-grid" id="status-grid"></div>
+    <div class="week-grid" id="week-grid" hidden></div>
 
     <div class="regatta-card" id="regatta-card" hidden>
       <span class="regatta-status" id="regatta-status"></span>
@@ -227,6 +240,13 @@
   const SHEET_ID = '1c_h72UnGtO8P7U2iy6oPifMRiUG_rVsxAQlHhlyRCZ0';
   const SEASONS_GID = '0';
   const OVERRIDES_GID = '884628836';
+  // ----------------------------------------------------------
+
+  // ----- LAYOUT: switch by hand when the season changes -----
+  //   'week'   = winter: today plus the next 4 days, with Saturday and
+  //              Sunday combined into one "Weekend" card
+  //   'twoDay' = on the water (spring/fall): just Today and Tomorrow
+  const LAYOUT = 'week';
   // ----------------------------------------------------------
 
   const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -411,20 +431,119 @@
     return 'is-no';
   }
 
-  function render(prefix, date, status, reason) {
-    const card = document.getElementById(prefix + '-card');
-    card.classList.add(statusClass(status));
-    document.getElementById(prefix + '-date').textContent =
-      date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-    document.getElementById(prefix + '-status').textContent = status;
-    document.getElementById(prefix + '-reason').textContent = reason;
+  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2 };
+
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+
+  function isWeekend(date) {
+    return date.getDay() === 0 || date.getDay() === 6;
+  }
+
+  function longDate(date) {
+    return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  function shortDate(date) {
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  // Groups days starting at `start` into `count` slots. Each weekday is
+  // its own slot; Saturday and Sunday share one "weekend" slot.
+  function buildSlots(start, count) {
+    const slots = [];
+    let d = new Date(start);
+    while (slots.length < count) {
+      if (isWeekend(d)) {
+        const days = [];
+        while (isWeekend(d)) { days.push(d); d = addDays(d, 1); }
+        slots.push({ weekend: true, days });
+      } else {
+        slots.push({ weekend: false, days: [d] });
+        d = addDays(d, 1);
+      }
+    }
+    return slots;
+  }
+
+  // Status and reason for a slot. A weekend slot that's off on every
+  // day collapses to a plain "NO / Weekend". If an override puts
+  // practice on either weekend day, the card shows the busiest status
+  // and lists each day's details so nothing gets hidden.
+  function slotDetails(slot, seasons, overrides) {
+    const each = slot.days.map(d => ({ date: d, ...detailsFor(d, seasons, overrides) }));
+    if (!slot.weekend) return each[0];
+
+    const allOff = each.every(e => e.status === 'NO');
+    if (allOff) {
+      const notes = [...new Set(each.map(e => e.reason).filter(r => r !== 'Standard Schedule'))];
+      return { status: 'NO', reason: notes.length ? notes.join('\n') : 'Weekend' };
+    }
+
+    const top = each.reduce((a, b) => (STATUS_RANK[b.status] > STATUS_RANK[a.status] ? b : a));
+    const reason = each.map(e =>
+      WEEKDAYS[e.date.getDay()].slice(0, 3) + ': ' + e.status +
+      (e.status === 'NO' && e.reason === 'Standard Schedule' ? '' : '\n' + e.reason)
+    ).join('\n');
+    return { status: top.status, reason };
+  }
+
+  function makeCard({ label, date, status, reason, compact }) {
+    const card = document.createElement('div');
+    card.className = 'card ' + statusClass(status) + (compact ? ' compact' : '');
+    [['label', label], ['date', date], ['status', status], ['reason', reason]].forEach(([cls, text]) => {
+      const el = document.createElement('span');
+      el.className = cls;
+      el.textContent = text;
+      card.appendChild(el);
+    });
+    return card;
+  }
+
+  function renderTwoDay(today, seasons, overrides) {
+    const grid = document.getElementById('status-grid');
+    [['Today', today], ['Tomorrow', addDays(today, 1)]].forEach(([label, date]) => {
+      const { status, reason } = detailsFor(date, seasons, overrides);
+      grid.appendChild(makeCard({ label, date: longDate(date), status, reason }));
+    });
+  }
+
+  // Today gets the big card on top; the next four slots sit underneath.
+  function renderWeek(today, seasons, overrides) {
+    const slots = buildSlots(today, 5);
+    const grid = document.getElementById('status-grid');
+    const week = document.getElementById('week-grid');
+
+    slots.forEach((slot, i) => {
+      const { status, reason } = slotDetails(slot, seasons, overrides);
+      const first = slot.days[0];
+      const last = slot.days[slot.days.length - 1];
+      const isToday = i === 0;
+
+      let label, date;
+      if (slot.weekend) {
+        label = isToday ? 'Today · Weekend' : 'Weekend';
+        date = slot.days.length > 1
+          ? shortDate(first) + ' – ' + shortDate(last)
+          : longDate(first);
+      } else {
+        label = isToday ? 'Today' : WEEKDAYS[first.getDay()];
+        date = isToday ? longDate(first) : shortDate(first);
+      }
+
+      const card = makeCard({ label, date, status, reason, compact: !isToday });
+      (isToday ? grid : week).appendChild(card);
+    });
+
+    week.hidden = false;
   }
 
   (async function init() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
     const note = document.getElementById('note');
 
@@ -434,10 +553,8 @@
         fetchTab(OVERRIDES_GID)
       ]);
 
-      const todayDetails = detailsFor(today, seasons, overrides);
-      const tomorrowDetails = detailsFor(tomorrow, seasons, overrides);
-      render('today', today, todayDetails.status, todayDetails.reason);
-      render('tomorrow', tomorrow, tomorrowDetails.status, tomorrowDetails.reason);
+      if (LAYOUT === 'week') renderWeek(today, seasons, overrides);
+      else renderTwoDay(today, seasons, overrides);
       renderRegatta(upcomingRegatta(today, overrides));
 
       note.textContent = 'Updates automatically from the season schedule.';
