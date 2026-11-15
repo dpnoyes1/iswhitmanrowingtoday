@@ -21,6 +21,13 @@
 
   * { box-sizing: border-box; }
 
+  /* Sizes are kept tight so the whole page fits on one screen without
+     scrolling. If a long form reason still pushes it over, the script
+     at the bottom shrinks the page to fit (see fitToScreen). */
+
+  html, body { overflow-x: hidden; }
+  [hidden] { display: none !important; }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -30,7 +37,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 20px 40px;
+    padding: 16px 16px 14px;
   }
 
   header {
@@ -39,16 +46,16 @@
   }
 
   .eyebrow {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--dawn);
-    margin: 0 0 6px;
+    margin: 0 0 4px;
   }
 
   h1 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 500;
     margin: 0;
     color: var(--fog);
@@ -58,7 +65,7 @@
     width: 100%;
     max-width: 480px;
     height: 2px;
-    margin: 22px 0 28px;
+    margin: 12px 0 14px;
     background: linear-gradient(90deg, transparent, var(--dawn), transparent);
     background-size: 200% 100%;
     animation: drift 6s ease-in-out infinite;
@@ -78,23 +85,32 @@
     max-width: 480px;
   }
 
+  /* One line with the winter shift times, shown above the cards. */
+  .shift-key {
+    text-align: center;
+    font-size: 13px;
+    color: var(--mist);
+    margin: 0 0 10px;
+  }
+  .shift-key strong { color: var(--fog); font-weight: 600; }
+
   .status-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
   }
-
 
   .card {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 200px;
+    align-items: center;
     background: var(--ink-2);
     border-radius: 12px;
     border-top: 3px solid var(--mist);
-    padding: 24px 20px 28px;
+    padding: 14px 14px 16px;
     text-align: center;
   }
 
@@ -102,27 +118,11 @@
   .card.is-no  { border-top-color: var(--stop); }
   .card.is-partial { border-top-color: var(--partial); }
 
-  .regatta-card {
-    margin-top: 16px;
-    background: var(--ink-2);
-    border-radius: 12px;
-    border-top: 3px solid var(--dawn);
-    padding: 24px 20px 28px;
-    text-align: center;
-  }
-
-  .regatta-status {
-    display: block;
-    font-family: 'Bebas Neue', 'Inter', sans-serif;
-    font-size: 32px;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    color: var(--dawn);
-  }
+  .head { display: block; }
 
   .label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -131,7 +131,7 @@
 
   .date {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--mist);
     margin-top: 2px;
   }
@@ -139,10 +139,10 @@
   .status {
     display: block;
     font-family: 'Bebas Neue', 'Inter', sans-serif;
-    font-size: 52px;
-    line-height: 1.1;
+    font-size: 44px;
+    line-height: 1.05;
     letter-spacing: 0.03em;
-    margin-top: 10px;
+    margin-top: 4px;
     color: var(--mist);
     white-space: nowrap;
   }
@@ -153,85 +153,110 @@
 
   .reason {
     display: inline-block;
-    margin-top: 14px;
-    padding: 4px 12px;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 4px 10px;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.06);
     font-size: 12px;
     color: var(--mist);
     letter-spacing: 0.02em;
     white-space: pre-line;   /* keeps line breaks typed into the sheet / form */
-    line-height: 1.5;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
   }
 
-  .note {
-    text-align: center;
-    font-size: 13px;
-    color: var(--mist);
-    margin-top: 24px;
-    line-height: 1.6;
-  }
-
-  .note.error { color: var(--stop); }
-
-  /* Desktop sizes. Kept after the base rules above so they take effect. */
-  @media (min-width: 560px) {
-    header { max-width: 960px; }
-    .horizon { max-width: 960px; }
-    main { max-width: 960px; }
-    .status-grid { flex-direction: row; gap: 32px; }
-    .card { min-height: 400px; padding: 48px 40px 56px; }
-    .label { font-size: 26px; }
-    .date { font-size: 26px; }
-    .status { font-size: 84px; margin-top: 20px; }
-    .reason { font-size: 24px; padding: 8px 20px; margin-top: 28px; }
-    .regatta-card { margin-top: 32px; padding: 48px 40px 56px; }
-    .regatta-status { font-size: 56px; }
-  }
+  /* Early/Late squads: brighter than other notes. */
+  .reason.shifts { font-size: 15px; font-weight: 600; color: var(--fog); padding: 6px 12px; }
 
   /* ----- Rolling 5-day (winter) layout ----- */
   .week-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .card.compact {
-    min-height: 0;
     justify-content: flex-start;
-    padding: 16px 10px 18px;
+    padding: 10px 8px 12px;
   }
 
-  .card.compact .status { font-size: 36px; margin-top: 6px; }
-  .card.compact .reason { font-size: 11px; padding: 4px 8px; margin-top: 10px; }
+  .card.compact .label,
+  .card.compact .date { font-size: 11px; }
+  .card.compact .status { font-size: 30px; margin-top: 2px; }
+  .card.compact .reason { font-size: 11px; padding: 3px 8px; margin-top: 6px; }
+  .card.compact .reason.shifts { font-size: 13px; padding: 4px 8px; }
 
-  /* Winter shift times: larger and brighter than other notes. */
-  .reason.shifts { font-size: 16px; font-weight: 600; color: var(--fog); padding: 8px 12px; }
-  .card.compact .reason.shifts { font-size: 14px; padding: 6px 10px; }
-
-  /* One line with the winter shift times, shown above the cards. */
-  .shift-key {
+  .regatta-card {
+    margin-top: 10px;
+    background: var(--ink-2);
+    border-radius: 12px;
+    border-top: 3px solid var(--dawn);
+    padding: 10px 14px 12px;
     text-align: center;
-    font-size: 14px;
-    color: var(--mist);
-    margin: -8px 0 20px;
   }
-  .shift-key strong { color: var(--fog); font-weight: 600; }
 
+  .regatta-status {
+    display: block;
+    font-family: 'Bebas Neue', 'Inter', sans-serif;
+    font-size: 22px;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+    color: var(--dawn);
+  }
+
+  .regatta-card .reason { margin-top: 6px; }
+
+  .note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--mist);
+    margin: 10px 0 0;
+    line-height: 1.5;
+  }
+
+  .note.error { color: var(--stop); }
+
+  /* ----- Desktop / tablet ----- */
   @media (min-width: 560px) {
-    .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
-    .card.compact { min-height: 0; padding: 24px 14px 28px; }
-    .card.compact .label { font-size: 14px; }
+    body { padding: 22px 32px 18px; }
+    header, .horizon, main { max-width: 960px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 24px; }
+    .horizon { margin: 14px 0 16px; }
+    .shift-key { font-size: 17px; margin-bottom: 14px; }
+
+    .status-grid { flex-direction: row; gap: 24px; }
+    .card { padding: 22px 24px 24px; }
+    .label, .date { font-size: 20px; }
+    .status { font-size: 72px; margin-top: 6px; }
+    .reason { font-size: 17px; padding: 6px 16px; margin-top: 12px; }
+    .reason.shifts { font-size: 20px; }
+
+    /* 5-day layout: Today sits in one wide row (day | status | details). */
+    .card.wide {
+      flex-direction: row;
+      justify-content: space-around;
+      gap: 24px;
+      padding: 18px 28px;
+    }
+    .card.wide .head { flex: 1; text-align: center; }
+    .card.wide .status { margin-top: 0; }
+    .card.wide .reason { flex: 1; margin-top: 0; }
+
+    .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+    .card.compact { padding: 16px 12px 18px; }
+    .card.compact .label,
     .card.compact .date { font-size: 14px; }
     /* Shrinks on narrow screens so a long word like PARTIAL still fits. */
-    .card.compact .status { font-size: clamp(30px, 4.6vw, 44px); margin-top: 8px; }
-    .card.compact .reason { font-size: 12px; padding: 6px 10px; margin-top: 12px; }
-    .reason.shifts { font-size: 20px; }
+    .card.compact .status { font-size: clamp(30px, 4.6vw, 48px); margin-top: 6px; }
+    .card.compact .reason { font-size: 13px; padding: 5px 10px; margin-top: 10px; }
     .card.compact .reason.shifts { font-size: clamp(12px, 1.7vw, 16px); }
-    /* 5-day layout: the lone Today card doesn't need the tall two-day height. */
-    .status-grid .card:only-child { min-height: 0; padding: 36px 40px 40px; }
-    .shift-key { font-size: 18px; margin: -4px 0 28px; }
+
+    .regatta-card { margin-top: 18px; padding: 14px 24px 16px; }
+    .regatta-status { font-size: 30px; }
+    .note { font-size: 13px; margin-top: 14px; }
   }
 </style>
 </head>
@@ -542,17 +567,24 @@
     key.hidden = false;
   }
 
-  function makeCard({ label, date, status, statusText, reason, shifts, compact }) {
+  function makeCard({ label, date, status, statusText, reason, shifts, compact, wide }) {
     if (shifts) showShiftKey();
     const card = document.createElement('div');
-    card.className = 'card ' + statusClass(status) + (compact ? ' compact' : '');
-    const reasonClass = 'reason' + (shifts ? ' shifts' : '');
-    [['label', label], ['date', date], ['status', statusText || status], [reasonClass, reason]].forEach(([cls, text]) => {
+    card.className = 'card ' + statusClass(status) +
+      (compact ? ' compact' : '') + (wide ? ' wide' : '');
+
+    function span(cls, text) {
       const el = document.createElement('span');
       el.className = cls;
       el.textContent = text;
-      card.appendChild(el);
-    });
+      return el;
+    }
+    // Label and date are grouped so the wide card can lay them out as one column.
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.append(span('label', label), span('date', date));
+    card.append(head, span('status', statusText || status),
+      span('reason' + (shifts ? ' shifts' : ''), reason));
     return card;
   }
 
@@ -587,12 +619,34 @@
         date = isToday ? longDate(first) : shortDate(first);
       }
 
-      const card = makeCard({ label, date, status, statusText, reason, shifts, compact: !isToday });
+      const card = makeCard({ label, date, status, statusText, reason, shifts,
+        compact: !isToday, wide: isToday });
       (isToday ? grid : week).appendChild(card);
     });
 
     week.hidden = false;
   }
+
+  // The page should never need scrolling. The CSS fits normal weeks; if a
+  // long form reason still pushes it past the window, shrink the whole
+  // page just enough to fit (never below 55%).
+  function fitToScreen() {
+    const body = document.body;
+    const root = document.documentElement;
+    body.style.zoom = '';
+    for (let i = 0; i < 4; i++) {
+      const over = Math.max(root.scrollHeight / innerHeight, root.scrollWidth / innerWidth);
+      if (over <= 1.001) return;
+      const current = parseFloat(body.style.zoom) || 1;
+      body.style.zoom = Math.max(0.55, Math.floor((current / over) * 100) / 100);
+    }
+  }
+  let fitTimer;
+  addEventListener('resize', () => {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitToScreen, 100);
+  });
+  if (document.fonts) document.fonts.ready.then(fitToScreen);
 
   (async function init() {
     const today = new Date();
@@ -611,6 +665,7 @@
       renderRegatta(upcomingRegatta(today, overrides));
 
       note.textContent = 'Updates automatically from the season schedule.';
+      fitToScreen();
     } catch (err) {
       console.error(err);
       note.textContent = 'Could not load the schedule right now. Try refreshing.';
