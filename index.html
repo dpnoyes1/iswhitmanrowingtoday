@@ -206,10 +206,11 @@
 
   /* Winter shift times: larger and brighter than other notes. */
   .reason.shifts { font-size: 16px; font-weight: 600; color: var(--fog); padding: 8px 12px; }
-  .card.compact .reason.shifts { font-size: 11px; font-weight: 500; padding: 6px 6px; white-space: normal; }
+  .card.compact .reason.shifts { font-size: 11px; font-weight: 500; padding: 6px 4px; white-space: normal; }
+  .shift-row { white-space: nowrap; }
   .shift-row { display: block; }
   .shift-row + .shift-row { margin-top: 6px; }
-  .shift-row strong { display: block; font-size: 17px; font-weight: 600; }
+  .shift-row strong { display: block; font-weight: 600; }
 
   @media (min-width: 560px) {
     .week-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
@@ -218,7 +219,6 @@
     .card.compact .reason { font-size: 12px; padding: 6px 10px; margin-top: 12px; }
     .reason.shifts { font-size: 20px; }
     .card.compact .reason.shifts { font-size: 13px; }
-    .shift-row strong { font-size: 20px; }
   }
 </style>
 </head>
