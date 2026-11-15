@@ -84,19 +84,6 @@
     gap: 16px;
   }
 
-  @media (min-width: 560px) {
-    header { max-width: 960px; }
-    .horizon { max-width: 960px; }
-    main { max-width: 960px; }
-    .status-grid { flex-direction: row; gap: 32px; }
-    .card { min-height: 400px; padding: 48px 40px 56px; }
-    .label { font-size: 26px; }
-    .date { font-size: 26px; }
-    .status { font-size: 84px; margin-top: 20px; }
-    .reason { font-size: 24px; padding: 8px 20px; margin-top: 28px; }
-    .regatta-card { margin-top: 32px; padding: 48px 40px 56px; }
-    .regatta-status { font-size: 56px; }
-  }
 
   .card {
     flex: 1;
@@ -187,10 +174,25 @@
 
   .note.error { color: var(--stop); }
 
+  /* Desktop sizes. Kept after the base rules above so they take effect. */
+  @media (min-width: 560px) {
+    header { max-width: 960px; }
+    .horizon { max-width: 960px; }
+    main { max-width: 960px; }
+    .status-grid { flex-direction: row; gap: 32px; }
+    .card { min-height: 400px; padding: 48px 40px 56px; }
+    .label { font-size: 26px; }
+    .date { font-size: 26px; }
+    .status { font-size: 84px; margin-top: 20px; }
+    .reason { font-size: 24px; padding: 8px 20px; margin-top: 28px; }
+    .regatta-card { margin-top: 32px; padding: 48px 40px 56px; }
+    .regatta-status { font-size: 56px; }
+  }
+
   /* ----- Rolling 5-day (winter) layout ----- */
   .week-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-top: 12px;
   }
@@ -218,12 +220,17 @@
   .shift-key strong { color: var(--fog); font-weight: 600; }
 
   @media (min-width: 560px) {
-    .week-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
+    .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
     .card.compact { min-height: 0; padding: 24px 14px 28px; }
-    .card.compact .status { font-size: 44px; margin-top: 8px; }
+    .card.compact .label { font-size: 14px; }
+    .card.compact .date { font-size: 14px; }
+    /* Shrinks on narrow screens so a long word like PARTIAL still fits. */
+    .card.compact .status { font-size: clamp(30px, 4.6vw, 44px); margin-top: 8px; }
     .card.compact .reason { font-size: 12px; padding: 6px 10px; margin-top: 12px; }
     .reason.shifts { font-size: 20px; }
-    .card.compact .reason.shifts { font-size: 16px; }
+    .card.compact .reason.shifts { font-size: clamp(12px, 1.7vw, 16px); }
+    /* 5-day layout: the lone Today card doesn't need the tall two-day height. */
+    .status-grid .card:only-child { min-height: 0; padding: 36px 40px 40px; }
     .shift-key { font-size: 18px; margin: -4px 0 28px; }
   }
 </style>
@@ -399,7 +406,9 @@
       return { status, reason, shifts: !!shiftText && reason === shiftText };
     }
 
-    const override = overrides.find(o =>
+    // Newest form submission wins if a date was entered more than once
+    // (form rows are appended in the order they're submitted).
+    const override = [...overrides].reverse().find(o =>
       sameDay(parseDate(o['Date']), date) && normalizeStatus(o['Status']) !== 'REGATTA'
     );
     if (override) {
@@ -410,7 +419,7 @@
       else if (status === 'PARTIAL') reason = 'Check Slack for Details';
       else if (status === 'YES') reason = yesText();
       else reason = 'Standard Schedule';
-      return result(status, reason);
+      return { ...result(status, reason), fromForm: !!reasonRaw };
     }
 
     const status = season ? normalizeStatus(season[WEEKDAYS[date.getDay()]]) : 'NO';
@@ -494,8 +503,8 @@
     return slots;
   }
 
-  // Status and reason for a slot. A weekend slot always shows the OYO
-  // workout note, and reads OFF (no in-person practice) when both days
+  // Status and reason for a slot. A weekend slot shows the OYO workout
+  // note (or a form entry's reason, if there is one), and reads OFF (no in-person practice) when both days
   // are off. If an override puts practice on either weekend day,
   // the card shows the busiest status and also lists each day's details
   // so nothing gets hidden.
@@ -504,7 +513,11 @@
     if (!slot.weekend) return each[0];
 
     const allOff = each.every(e => e.status === 'NO');
-    if (allOff) return { status: 'NO', label: 'OFF', reason: WEEKEND_TEXT };
+    if (allOff) {
+      // A form entry with a reason (e.g. Winter Break) replaces the OYO note.
+      const notes = [...new Set(each.filter(e => e.fromForm).map(e => e.reason))];
+      return { status: 'NO', label: 'OFF', reason: notes.length ? notes.join('\n') : WEEKEND_TEXT };
+    }
 
     const top = each.reduce((a, b) => (STATUS_RANK[b.status] > STATUS_RANK[a.status] ? b : a));
     const reason = WEEKEND_TEXT + '\n\n' + each.map(e =>
