@@ -21,6 +21,13 @@
 
   * { box-sizing: border-box; }
 
+  /* Sizes are kept tight so the whole page fits on one screen without
+     scrolling. If a long form reason still pushes it over, the script
+     at the bottom shrinks the page to fit (see fitToScreen). */
+
+  html, body { overflow-x: hidden; }
+  [hidden] { display: none !important; }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -30,7 +37,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 20px 40px;
+    padding: 16px 16px 14px;
   }
 
   header {
@@ -39,16 +46,16 @@
   }
 
   .eyebrow {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--dawn);
-    margin: 0 0 6px;
+    margin: 0 0 4px;
   }
 
   h1 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 500;
     margin: 0;
     color: var(--fog);
@@ -58,7 +65,7 @@
     width: 100%;
     max-width: 480px;
     height: 2px;
-    margin: 22px 0 28px;
+    margin: 12px 0 14px;
     background: linear-gradient(90deg, transparent, var(--dawn), transparent);
     background-size: 200% 100%;
     animation: drift 6s ease-in-out infinite;
@@ -78,36 +85,32 @@
     max-width: 480px;
   }
 
+  /* One line with the winter shift times, shown above the cards. */
+  .shift-key {
+    text-align: center;
+    font-size: 13px;
+    color: var(--mist);
+    margin: 0 0 10px;
+  }
+  .shift-key strong { color: var(--fog); font-weight: 600; }
+
   .status-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-  }
-
-  @media (min-width: 560px) {
-    header { max-width: 960px; }
-    .horizon { max-width: 960px; }
-    main { max-width: 960px; }
-    .status-grid { flex-direction: row; gap: 32px; }
-    .card { min-height: 400px; padding: 48px 40px 56px; }
-    .label { font-size: 26px; }
-    .date { font-size: 26px; }
-    .status { font-size: 84px; margin-top: 20px; }
-    .reason { font-size: 24px; padding: 8px 20px; margin-top: 28px; }
-    .regatta-card { margin-top: 32px; padding: 48px 40px 56px; }
-    .regatta-status { font-size: 56px; }
+    gap: 10px;
   }
 
   .card {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 200px;
+    align-items: center;
     background: var(--ink-2);
     border-radius: 12px;
     border-top: 3px solid var(--mist);
-    padding: 24px 20px 28px;
+    padding: 14px 14px 16px;
     text-align: center;
   }
 
@@ -115,27 +118,11 @@
   .card.is-no  { border-top-color: var(--stop); }
   .card.is-partial { border-top-color: var(--partial); }
 
-  .regatta-card {
-    margin-top: 16px;
-    background: var(--ink-2);
-    border-radius: 12px;
-    border-top: 3px solid var(--dawn);
-    padding: 24px 20px 28px;
-    text-align: center;
-  }
-
-  .regatta-status {
-    display: block;
-    font-family: 'Bebas Neue', 'Inter', sans-serif;
-    font-size: 32px;
-    line-height: 1.2;
-    letter-spacing: 0.02em;
-    color: var(--dawn);
-  }
+  .head { display: block; }
 
   .label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -144,7 +131,7 @@
 
   .date {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--mist);
     margin-top: 2px;
   }
@@ -152,10 +139,10 @@
   .status {
     display: block;
     font-family: 'Bebas Neue', 'Inter', sans-serif;
-    font-size: 52px;
-    line-height: 1.1;
+    font-size: 44px;
+    line-height: 1.05;
     letter-spacing: 0.03em;
-    margin-top: 10px;
+    margin-top: 4px;
     color: var(--mist);
     white-space: nowrap;
   }
@@ -166,26 +153,108 @@
 
   .reason {
     display: inline-block;
-    margin-top: 14px;
-    padding: 4px 12px;
+    max-width: 100%;
+    margin-top: 8px;
+    padding: 4px 10px;
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.06);
     font-size: 12px;
     color: var(--mist);
     letter-spacing: 0.02em;
     white-space: pre-line;   /* keeps line breaks typed into the sheet / form */
-    line-height: 1.5;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
   }
+
+  /* Early/Late squads: brighter than other notes. */
+  .reason.shifts { font-size: 15px; font-weight: 600; color: var(--fog); padding: 6px 12px; }
+
+  /* ----- Rolling 5-day (winter) layout ----- */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .card.compact {
+    justify-content: flex-start;
+    padding: 10px 8px 12px;
+  }
+
+  .card.compact .label,
+  .card.compact .date { font-size: 11px; }
+  .card.compact .status { font-size: 30px; margin-top: 2px; }
+  .card.compact .reason { font-size: 11px; padding: 3px 8px; margin-top: 6px; }
+  .card.compact .reason.shifts { font-size: 13px; padding: 4px 8px; }
+
+  .regatta-card {
+    margin-top: 10px;
+    background: var(--ink-2);
+    border-radius: 12px;
+    border-top: 3px solid var(--dawn);
+    padding: 10px 14px 12px;
+    text-align: center;
+  }
+
+  .regatta-status {
+    display: block;
+    font-family: 'Bebas Neue', 'Inter', sans-serif;
+    font-size: 22px;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+    color: var(--dawn);
+  }
+
+  .regatta-card .reason { margin-top: 6px; }
 
   .note {
     text-align: center;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--mist);
-    margin-top: 24px;
-    line-height: 1.6;
+    margin: 10px 0 0;
+    line-height: 1.5;
   }
 
   .note.error { color: var(--stop); }
+
+  /* ----- Desktop / tablet ----- */
+  @media (min-width: 560px) {
+    body { padding: 22px 32px 18px; }
+    header, .horizon, main { max-width: 960px; }
+    .eyebrow { font-size: 13px; }
+    h1 { font-size: 24px; }
+    .horizon { margin: 14px 0 16px; }
+    .shift-key { font-size: 17px; margin-bottom: 14px; }
+
+    .status-grid { flex-direction: row; gap: 24px; }
+    .card { padding: 22px 24px 24px; }
+    .label, .date { font-size: 20px; }
+    .status { font-size: 72px; margin-top: 6px; }
+    .reason { font-size: 17px; padding: 6px 16px; margin-top: 12px; }
+    .reason.shifts { font-size: 20px; }
+
+    /* 5-day layout: Today is stacked like the other cards, a bit smaller
+       than the two-day cards so the page fits on one screen. */
+    .card.wide { padding: 12px 24px 14px; }
+    .card.wide .label, .card.wide .date { font-size: 16px; }
+    .card.wide .status { font-size: 52px; margin-top: 2px; }
+    .card.wide .reason { margin-top: 6px; padding: 4px 16px; }
+    .card.wide .reason.shifts { font-size: 17px; }
+
+    .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+    .card.compact { padding: 16px 12px 18px; }
+    .card.compact .label,
+    .card.compact .date { font-size: 14px; }
+    /* Shrinks on narrow screens so a long word like PARTIAL still fits. */
+    .card.compact .status { font-size: clamp(30px, 4.6vw, 48px); margin-top: 6px; }
+    .card.compact .reason { font-size: 13px; padding: 5px 10px; margin-top: 10px; }
+    .card.compact .reason.shifts { font-size: clamp(12px, 1.7vw, 16px); }
+
+    .regatta-card { margin-top: 18px; padding: 14px 24px 16px; }
+    .regatta-status { font-size: 30px; }
+    .note { font-size: 13px; margin-top: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -198,20 +267,10 @@
   <div class="horizon" aria-hidden="true"></div>
 
   <main>
-    <div class="status-grid">
-      <div class="card" id="today-card">
-        <span class="label">Today</span>
-        <span class="date" id="today-date"></span>
-        <span class="status" id="today-status">&hellip;</span>
-        <span class="reason" id="today-reason"></span>
-      </div>
-      <div class="card" id="tomorrow-card">
-        <span class="label">Tomorrow</span>
-        <span class="date" id="tomorrow-date"></span>
-        <span class="status" id="tomorrow-status">&hellip;</span>
-        <span class="reason" id="tomorrow-reason"></span>
-      </div>
-    </div>
+    <p class="shift-key" id="shift-key" hidden></p>
+    <!-- Cards are built by the script below, based on LAYOUT. -->
+    <div class="status-grid" id="status-grid"></div>
+    <div class="week-grid" id="week-grid" hidden></div>
 
     <div class="regatta-card" id="regatta-card" hidden>
       <span class="regatta-status" id="regatta-status"></span>
@@ -229,6 +288,13 @@
   const OVERRIDES_GID = '884628836';
   // ----------------------------------------------------------
 
+  // ----- LAYOUT: switch by hand when the season changes -----
+  //   'week'   = winter: today plus the next 4 days, with Saturday and
+  //              Sunday combined into one "Weekend" card
+  //   'twoDay' = on the water (spring/fall): just Today and Tomorrow
+  const LAYOUT = 'week';
+  // ----------------------------------------------------------
+
   const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
   // ----- WINTER SHIFTS: edit the times here if they change -----
@@ -238,12 +304,15 @@
   //   Fri (even date) ...... Girls early, Boys late
   //   Fri (odd date) ....... Girls late,  Boys early
   const WINTER_SHIFTS = {
-    early: '3:30–5:30 PM',
-    late:  '5:00–7:00 PM'
+    early: '3:30PM-5:30PM',
+    late:  '5:00PM-7:00PM'
   };
+
+  // Shown on every Weekend card in the 5-day layout.
+  const WEEKEND_TEXT = 'Athletes check slack for coach assigned OYO workout';
   // -------------------------------------------------------------
 
-  // Returns the two-line "Girls / Boys" shift text for a winter practice
+  // Returns the two-line "Early: ... / Late: ..." shift text for a winter practice
   // day, or null if the weekday has no shift pattern (Sat/Sun).
   function winterShiftText(date) {
     const day = date.getDay();
@@ -253,9 +322,9 @@
     else if (day === 5) girlsEarly = date.getDate() % 2 === 0;
     else return null;
 
-    const girls = girlsEarly ? WINTER_SHIFTS.early : WINTER_SHIFTS.late;
-    const boys  = girlsEarly ? WINTER_SHIFTS.late  : WINTER_SHIFTS.early;
-    return 'Girls: ' + girls + '\nBoys: ' + boys;
+    const early = girlsEarly ? 'Girls' : 'Boys';
+    const late  = girlsEarly ? 'Boys'  : 'Girls';
+    return 'Early: ' + early + '\nLate: ' + late;
   }
 
   // Loads a sheet tab via a <script> tag instead of fetch(). Script tags
@@ -338,7 +407,7 @@
 
   // An override for the date wins, and its Reason (if given) is shown
   // as-is. Otherwise, use the season's weekly pattern, with the reason
-  // shown as "Standard Schedule" (or the Girls/Boys shift times on a
+  // shown as "Standard Schedule" (or the Early/Late squads on a
   // winter YES day). If neither applies, default to NO.
   function detailsFor(date, seasons, overrides) {
     const season = seasons.find(s => {
@@ -350,11 +419,18 @@
       (season['Season'] || '').trim().toLowerCase() === 'winter';
 
     // Default text for a YES day: shift times in winter, otherwise standard.
+    const shiftText = isWinter ? winterShiftText(date) : null;
     function yesText() {
-      return (isWinter && winterShiftText(date)) || 'Standard Schedule';
+      return shiftText || 'Standard Schedule';
+    }
+    // Flags Early/Late text so the card can style it and show the shift key.
+    function result(status, reason) {
+      return { status, reason, shifts: !!shiftText && reason === shiftText };
     }
 
-    const override = overrides.find(o =>
+    // Newest form submission wins if a date was entered more than once
+    // (form rows are appended in the order they're submitted).
+    const override = [...overrides].reverse().find(o =>
       sameDay(parseDate(o['Date']), date) && normalizeStatus(o['Status']) !== 'REGATTA'
     );
     if (override) {
@@ -365,11 +441,11 @@
       else if (status === 'PARTIAL') reason = 'Check Slack for Details';
       else if (status === 'YES') reason = yesText();
       else reason = 'Standard Schedule';
-      return { status, reason };
+      return { ...result(status, reason), fromForm: !!reasonRaw };
     }
 
     const status = season ? normalizeStatus(season[WEEKDAYS[date.getDay()]]) : 'NO';
-    return { status, reason: status === 'YES' ? yesText() : 'Standard Schedule' };
+    return result(status, status === 'YES' ? yesText() : 'Standard Schedule');
   }
 
   // Finds the soonest REGATTA-status row landing within the next 7 days
@@ -411,20 +487,167 @@
     return 'is-no';
   }
 
-  function render(prefix, date, status, reason) {
-    const card = document.getElementById(prefix + '-card');
-    card.classList.add(statusClass(status));
-    document.getElementById(prefix + '-date').textContent =
-      date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-    document.getElementById(prefix + '-status').textContent = status;
-    document.getElementById(prefix + '-reason').textContent = reason;
+  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2 };
+
+  function addDays(date, n) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
   }
+
+  function isWeekend(date) {
+    return date.getDay() === 0 || date.getDay() === 6;
+  }
+
+  function longDate(date) {
+    return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+
+  function shortDate(date) {
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  // Groups days starting at `start` into `count` slots. Each weekday is
+  // its own slot; Saturday and Sunday share one "weekend" slot.
+  function buildSlots(start, count) {
+    const slots = [];
+    let d = new Date(start);
+    while (slots.length < count) {
+      if (isWeekend(d)) {
+        const days = [];
+        while (isWeekend(d)) { days.push(d); d = addDays(d, 1); }
+        slots.push({ weekend: true, days });
+      } else {
+        slots.push({ weekend: false, days: [d] });
+        d = addDays(d, 1);
+      }
+    }
+    return slots;
+  }
+
+  // Status and reason for a slot. A weekend slot shows the OYO workout
+  // note (or a form entry's reason, if there is one), and reads OFF (no in-person practice) when both days
+  // are off. If an override puts practice on either weekend day,
+  // the card shows the busiest status and also lists each day's details
+  // so nothing gets hidden.
+  function slotDetails(slot, seasons, overrides) {
+    const each = slot.days.map(d => ({ date: d, ...detailsFor(d, seasons, overrides) }));
+    if (!slot.weekend) return each[0];
+
+    const allOff = each.every(e => e.status === 'NO');
+    if (allOff) {
+      // A form entry with a reason (e.g. Winter Break) replaces the OYO note.
+      const notes = [...new Set(each.filter(e => e.fromForm).map(e => e.reason))];
+      return { status: 'NO', label: 'OFF', reason: notes.length ? notes.join('\n') : WEEKEND_TEXT };
+    }
+
+    const top = each.reduce((a, b) => (STATUS_RANK[b.status] > STATUS_RANK[a.status] ? b : a));
+    const reason = WEEKEND_TEXT + '\n\n' + each.map(e =>
+      WEEKDAYS[e.date.getDay()].slice(0, 3) + ': ' + e.status +
+      (e.status === 'NO' && e.reason === 'Standard Schedule' ? '' : '\n' + e.reason)
+    ).join('\n');
+    return { status: top.status, reason };
+  }
+
+  // Shows the shift times once, above the cards, whenever a card lists
+  // Early/Late squads.
+  function showShiftKey() {
+    const key = document.getElementById('shift-key');
+    key.innerHTML = '';
+    [['Early', WINTER_SHIFTS.early], ['Late', WINTER_SHIFTS.late]].forEach(([name, time], i) => {
+      if (i) key.appendChild(document.createTextNode('  ·  '));
+      const b = document.createElement('strong');
+      b.textContent = name + ':';
+      key.appendChild(b);
+      key.appendChild(document.createTextNode(' ' + time));
+    });
+    key.hidden = false;
+  }
+
+  function makeCard({ label, date, status, statusText, reason, shifts, compact, wide }) {
+    if (shifts) showShiftKey();
+    const card = document.createElement('div');
+    card.className = 'card ' + statusClass(status) +
+      (compact ? ' compact' : '') + (wide ? ' wide' : '');
+
+    function span(cls, text) {
+      const el = document.createElement('span');
+      el.className = cls;
+      el.textContent = text;
+      return el;
+    }
+    // Label and date are grouped in a header block.
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.append(span('label', label), span('date', date));
+    card.append(head, span('status', statusText || status),
+      span('reason' + (shifts ? ' shifts' : ''), reason));
+    return card;
+  }
+
+  function renderTwoDay(today, seasons, overrides) {
+    const grid = document.getElementById('status-grid');
+    [['Today', today], ['Tomorrow', addDays(today, 1)]].forEach(([label, date]) => {
+      const { status, reason, shifts } = detailsFor(date, seasons, overrides);
+      grid.appendChild(makeCard({ label, date: longDate(date), status, reason, shifts }));
+    });
+  }
+
+  // Today gets the big card on top; the next four slots sit underneath.
+  function renderWeek(today, seasons, overrides) {
+    const slots = buildSlots(today, 5);
+    const grid = document.getElementById('status-grid');
+    const week = document.getElementById('week-grid');
+
+    slots.forEach((slot, i) => {
+      const { status, label: statusText, reason, shifts } = slotDetails(slot, seasons, overrides);
+      const first = slot.days[0];
+      const last = slot.days[slot.days.length - 1];
+      const isToday = i === 0;
+
+      let label, date;
+      if (slot.weekend) {
+        label = isToday ? 'Today · Weekend' : 'Weekend';
+        date = slot.days.length > 1
+          ? shortDate(first) + ' – ' + shortDate(last)
+          : longDate(first);
+      } else {
+        label = isToday ? 'Today' : WEEKDAYS[first.getDay()];
+        date = isToday ? longDate(first) : shortDate(first);
+      }
+
+      const card = makeCard({ label, date, status, statusText, reason, shifts,
+        compact: !isToday, wide: isToday });
+      (isToday ? grid : week).appendChild(card);
+    });
+
+    week.hidden = false;
+  }
+
+  // The page should never need scrolling. The CSS fits normal weeks; if a
+  // long form reason still pushes it past the window, shrink the whole
+  // page just enough to fit (never below 55%).
+  function fitToScreen() {
+    const body = document.body;
+    const root = document.documentElement;
+    body.style.zoom = '';
+    for (let i = 0; i < 4; i++) {
+      const over = Math.max(root.scrollHeight / innerHeight, root.scrollWidth / innerWidth);
+      if (over <= 1.001) return;
+      const current = parseFloat(body.style.zoom) || 1;
+      body.style.zoom = Math.max(0.55, Math.floor((current / over) * 100) / 100);
+    }
+  }
+  let fitTimer;
+  addEventListener('resize', () => {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitToScreen, 100);
+  });
+  if (document.fonts) document.fonts.ready.then(fitToScreen);
 
   (async function init() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
     const note = document.getElementById('note');
 
@@ -434,13 +657,12 @@
         fetchTab(OVERRIDES_GID)
       ]);
 
-      const todayDetails = detailsFor(today, seasons, overrides);
-      const tomorrowDetails = detailsFor(tomorrow, seasons, overrides);
-      render('today', today, todayDetails.status, todayDetails.reason);
-      render('tomorrow', tomorrow, tomorrowDetails.status, tomorrowDetails.reason);
+      if (LAYOUT === 'week') renderWeek(today, seasons, overrides);
+      else renderTwoDay(today, seasons, overrides);
       renderRegatta(upcomingRegatta(today, overrides));
 
       note.textContent = 'Updates automatically from the season schedule.';
+      fitToScreen();
     } catch (err) {
       console.error(err);
       note.textContent = 'Could not load the schedule right now. Try refreshing.';
