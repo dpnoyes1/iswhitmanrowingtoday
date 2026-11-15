@@ -206,11 +206,16 @@
 
   /* Winter shift times: larger and brighter than other notes. */
   .reason.shifts { font-size: 16px; font-weight: 600; color: var(--fog); padding: 8px 12px; }
-  .card.compact .reason.shifts { font-size: 11px; font-weight: 500; padding: 6px 4px; white-space: normal; }
-  .shift-row { white-space: nowrap; }
-  .shift-row { display: block; }
-  .shift-row + .shift-row { margin-top: 6px; }
-  .shift-row strong { display: block; font-weight: 600; }
+  .card.compact .reason.shifts { font-size: 14px; padding: 6px 10px; }
+
+  /* One line with the winter shift times, shown above the cards. */
+  .shift-key {
+    text-align: center;
+    font-size: 14px;
+    color: var(--mist);
+    margin: -8px 0 20px;
+  }
+  .shift-key strong { color: var(--fog); font-weight: 600; }
 
   @media (min-width: 560px) {
     .week-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
@@ -218,7 +223,8 @@
     .card.compact .status { font-size: 44px; margin-top: 8px; }
     .card.compact .reason { font-size: 12px; padding: 6px 10px; margin-top: 12px; }
     .reason.shifts { font-size: 20px; }
-    .card.compact .reason.shifts { font-size: 13px; }
+    .card.compact .reason.shifts { font-size: 16px; }
+    .shift-key { font-size: 18px; margin: -4px 0 28px; }
   }
 </style>
 </head>
@@ -232,6 +238,7 @@
   <div class="horizon" aria-hidden="true"></div>
 
   <main>
+    <p class="shift-key" id="shift-key" hidden></p>
     <!-- Cards are built by the script below, based on LAYOUT. -->
     <div class="status-grid" id="status-grid"></div>
     <div class="week-grid" id="week-grid" hidden></div>
@@ -288,8 +295,7 @@
 
     const early = girlsEarly ? 'Girls' : 'Boys';
     const late  = girlsEarly ? 'Boys'  : 'Girls';
-    return 'Early (' + WINTER_SHIFTS.early + '): ' + early + '\n' +
-           'Late (' + WINTER_SHIFTS.late + '): ' + late;
+    return 'Early: ' + early + '\nLate: ' + late;
   }
 
   // Loads a sheet tab via a <script> tag instead of fetch(). Script tags
@@ -372,7 +378,7 @@
 
   // An override for the date wins, and its Reason (if given) is shown
   // as-is. Otherwise, use the season's weekly pattern, with the reason
-  // shown as "Standard Schedule" (or the Girls/Boys shift times on a
+  // shown as "Standard Schedule" (or the Early/Late squads on a
   // winter YES day). If neither applies, default to NO.
   function detailsFor(date, seasons, overrides) {
     const season = seasons.find(s => {
@@ -388,7 +394,7 @@
     function yesText() {
       return shiftText || 'Standard Schedule';
     }
-    // Flags shift-time text so the card can show it larger.
+    // Flags Early/Late text so the card can style it and show the shift key.
     function result(status, reason) {
       return { status, reason, shifts: !!shiftText && reason === shiftText };
     }
@@ -508,31 +514,30 @@
     return { status: top.status, reason };
   }
 
+  // Shows the shift times once, above the cards, whenever a card lists
+  // Early/Late squads.
+  function showShiftKey() {
+    const key = document.getElementById('shift-key');
+    key.innerHTML = '';
+    [['Early', WINTER_SHIFTS.early], ['Late', WINTER_SHIFTS.late]].forEach(([name, time], i) => {
+      if (i) key.appendChild(document.createTextNode('  ·  '));
+      const b = document.createElement('strong');
+      b.textContent = name + ':';
+      key.appendChild(b);
+      key.appendChild(document.createTextNode(' ' + time));
+    });
+    key.hidden = false;
+  }
+
   function makeCard({ label, date, status, statusText, reason, shifts, compact }) {
+    if (shifts) showShiftKey();
     const card = document.createElement('div');
     card.className = 'card ' + statusClass(status) + (compact ? ' compact' : '');
     const reasonClass = 'reason' + (shifts ? ' shifts' : '');
     [['label', label], ['date', date], ['status', statusText || status], [reasonClass, reason]].forEach(([cls, text]) => {
       const el = document.createElement('span');
       el.className = cls;
-      if (shifts && compact && cls !== 'label' && cls.startsWith('reason')) {
-        // Narrow cards: put each shift's time on its own line, with the
-        // squad underneath, so the text wraps cleanly.
-        text.split('\n').forEach(line => {
-          const m = line.match(/^(.*\)):\s*(.*)$/);
-          const row = document.createElement('span');
-          row.className = 'shift-row';
-          row.textContent = m ? m[1] + ':' : line;
-          if (m) {
-            const who = document.createElement('strong');
-            who.textContent = m[2];
-            row.appendChild(who);
-          }
-          el.appendChild(row);
-        });
-      } else {
-        el.textContent = text;
-      }
+      el.textContent = text;
       card.appendChild(el);
     });
     return card;
