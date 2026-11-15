@@ -234,16 +234,13 @@
     .reason { font-size: 17px; padding: 6px 16px; margin-top: 12px; }
     .reason.shifts { font-size: 20px; }
 
-    /* 5-day layout: Today sits in one wide row (day | status | details). */
-    .card.wide {
-      flex-direction: row;
-      justify-content: space-around;
-      gap: 24px;
-      padding: 18px 28px;
-    }
-    .card.wide .head { flex: 1; text-align: center; }
-    .card.wide .status { margin-top: 0; }
-    .card.wide .reason { flex: 1; margin-top: 0; }
+    /* 5-day layout: Today is stacked like the other cards, a bit smaller
+       than the two-day cards so the page fits on one screen. */
+    .card.wide { padding: 12px 24px 14px; }
+    .card.wide .label, .card.wide .date { font-size: 16px; }
+    .card.wide .status { font-size: 52px; margin-top: 2px; }
+    .card.wide .reason { margin-top: 6px; padding: 4px 16px; }
+    .card.wide .reason.shifts { font-size: 17px; }
 
     .week-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
     .card.compact { padding: 16px 12px 18px; }
@@ -579,7 +576,7 @@
       el.textContent = text;
       return el;
     }
-    // Label and date are grouped so the wide card can lay them out as one column.
+    // Label and date are grouped in a header block.
     const head = document.createElement('div');
     head.className = 'head';
     head.append(span('label', label), span('date', date));
