@@ -94,6 +94,22 @@
   }
   .shift-key strong { color: var(--fog); font-weight: 600; }
 
+  /* Color key for the card statuses. PARTIAL and CHANGE share orange. */
+  .legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin: 0 0 10px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
   .status-grid {
     display: flex;
     flex-direction: column;
@@ -116,7 +132,8 @@
 
   .card.is-yes { border-top-color: var(--go); }
   .card.is-no  { border-top-color: var(--stop); }
-  .card.is-partial { border-top-color: var(--partial); }
+  .card.is-partial,
+  .card.is-change { border-top-color: var(--partial); }
 
   .head { display: block; }
 
@@ -149,7 +166,8 @@
 
   .card.is-yes .status { color: var(--go); }
   .card.is-no .status  { color: var(--stop); }
-  .card.is-partial .status { color: var(--partial); }
+  .card.is-partial .status,
+  .card.is-change .status { color: var(--partial); }
 
   .reason {
     display: inline-block;
@@ -226,6 +244,7 @@
     h1 { font-size: 24px; }
     .horizon { margin: 14px 0 16px; }
     .shift-key { font-size: 17px; margin-bottom: 14px; }
+    .legend { font-size: 14px; margin-bottom: 14px; }
 
     .status-grid { flex-direction: row; gap: 24px; }
     .card { padding: 22px 24px 24px; }
@@ -268,6 +287,11 @@
 
   <main>
     <p class="shift-key" id="shift-key" hidden></p>
+    <div class="legend" aria-label="Status colors">
+      <span><i style="background: var(--go)"></i>Yes</span>
+      <span><i style="background: var(--partial)"></i>Partial / Change</span>
+      <span><i style="background: var(--stop)"></i>No</span>
+    </div>
     <!-- Cards are built by the script below, based on LAYOUT. -->
     <div class="status-grid" id="status-grid"></div>
     <div class="week-grid" id="week-grid" hidden></div>
@@ -401,6 +425,7 @@
     const s = (v || '').trim().toUpperCase();
     if (s === 'YES') return 'YES';
     if (s === 'PARTIAL') return 'PARTIAL';
+    if (s === 'CHANGE') return 'CHANGE';
     if (s === 'REGATTA') return 'REGATTA';
     return 'NO';
   }
@@ -439,6 +464,7 @@
       let reason;
       if (reasonRaw) reason = reasonRaw;
       else if (status === 'PARTIAL') reason = 'Check Slack for Details';
+      else if (status === 'CHANGE') reason = 'Practice Time Changed: Check Slack';
       else if (status === 'YES') reason = yesText();
       else reason = 'Standard Schedule';
       return { ...result(status, reason), fromForm: !!reasonRaw };
@@ -484,10 +510,13 @@
   function statusClass(status) {
     if (status === 'YES') return 'is-yes';
     if (status === 'PARTIAL') return 'is-partial';
+    if (status === 'CHANGE') return 'is-change';
     return 'is-no';
   }
 
-  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2 };
+  // CHANGE is still a practice day, but ranks highest so a weekend card
+  // flags it rather than hiding it behind a plain YES.
+  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2, CHANGE: 3 };
 
   function addDays(date, n) {
     const d = new Date(date);
