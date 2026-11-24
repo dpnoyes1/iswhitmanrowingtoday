@@ -94,6 +94,22 @@
   }
   .shift-key strong { color: var(--fog); font-weight: 600; }
 
+  /* Color key for the card statuses. PARTIAL and CHANGE share orange. */
+  .legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--mist);
+    margin: 0 0 10px;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
   .status-grid {
     display: flex;
     flex-direction: column;
@@ -228,6 +244,7 @@
     h1 { font-size: 24px; }
     .horizon { margin: 14px 0 16px; }
     .shift-key { font-size: 17px; margin-bottom: 14px; }
+    .legend { font-size: 14px; margin-bottom: 14px; }
 
     .status-grid { flex-direction: row; gap: 24px; }
     .card { padding: 22px 24px 24px; }
@@ -270,6 +287,11 @@
 
   <main>
     <p class="shift-key" id="shift-key" hidden></p>
+    <div class="legend" aria-label="Status colors">
+      <span><i style="background: var(--go)"></i>Yes</span>
+      <span><i style="background: var(--partial)"></i>Partial / Change</span>
+      <span><i style="background: var(--stop)"></i>No</span>
+    </div>
     <!-- Cards are built by the script below, based on LAYOUT. -->
     <div class="status-grid" id="status-grid"></div>
     <div class="week-grid" id="week-grid" hidden></div>
