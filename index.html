@@ -116,7 +116,8 @@
 
   .card.is-yes { border-top-color: var(--go); }
   .card.is-no  { border-top-color: var(--stop); }
-  .card.is-partial { border-top-color: var(--partial); }
+  .card.is-partial,
+  .card.is-change { border-top-color: var(--partial); }
 
   .head { display: block; }
 
@@ -149,7 +150,8 @@
 
   .card.is-yes .status { color: var(--go); }
   .card.is-no .status  { color: var(--stop); }
-  .card.is-partial .status { color: var(--partial); }
+  .card.is-partial .status,
+  .card.is-change .status { color: var(--partial); }
 
   .reason {
     display: inline-block;
@@ -401,6 +403,7 @@
     const s = (v || '').trim().toUpperCase();
     if (s === 'YES') return 'YES';
     if (s === 'PARTIAL') return 'PARTIAL';
+    if (s === 'CHANGE') return 'CHANGE';
     if (s === 'REGATTA') return 'REGATTA';
     return 'NO';
   }
@@ -439,6 +442,7 @@
       let reason;
       if (reasonRaw) reason = reasonRaw;
       else if (status === 'PARTIAL') reason = 'Check Slack for Details';
+      else if (status === 'CHANGE') reason = 'Practice Time Changed: Check Slack';
       else if (status === 'YES') reason = yesText();
       else reason = 'Standard Schedule';
       return { ...result(status, reason), fromForm: !!reasonRaw };
@@ -484,10 +488,13 @@
   function statusClass(status) {
     if (status === 'YES') return 'is-yes';
     if (status === 'PARTIAL') return 'is-partial';
+    if (status === 'CHANGE') return 'is-change';
     return 'is-no';
   }
 
-  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2 };
+  // CHANGE is still a practice day, but ranks highest so a weekend card
+  // flags it rather than hiding it behind a plain YES.
+  const STATUS_RANK = { NO: 0, PARTIAL: 1, YES: 2, CHANGE: 3 };
 
   function addDays(date, n) {
     const d = new Date(date);
